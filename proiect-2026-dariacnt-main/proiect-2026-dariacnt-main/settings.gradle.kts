@@ -1,0 +1,1 @@
+rootProject.name = "proiect-2025-template"

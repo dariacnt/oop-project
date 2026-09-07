@@ -1,0 +1,86 @@
+Enums:
+    - PathType
+    - AlerType : tipul de alerta
+    - Severity : gradul severitatii
+    - ServerStatus : statusul serverului
+
+Exceptii:
+    - MissingIpAddressException:
+    Este aruncata atunci cand campul pentru IP-ul serverului este gol.
+
+    - LocationException:
+    Este aruncata atunci cand informatia despre tara lipseste din datele serverului.
+
+    - UserException:
+    Este aruncata atunci cand numele sau rolul utilizatorului sunt goale sau lipsesc.
+
+Clase:
+
+    - User: este clasa de baza folosita pentru a defini utilizatorii care interactioneaza cu sistemul. Userii au un nume, rol si email.
+
+    - Operator: mosteneste atributele si metodele unui user obisnuit la care se adauga un atribut suplimentar: departament.
+
+    - Admin: mosteneste atributele si metodele unui operator la care se adauga un atribut nou: clearanceLevel.
+
+    Aici am folosit design pattern-ul FACTORY deoarece:
+        - Sistemul are tipuri diferite de utilizatori (ex: Admin, Operator) care extind clasa User dar care au atribute specifice.
+        - Factory incapsuleaza logica de creare a utilizatorului intr-o singura clasa. Database nu trebuie sa verifice rolul utilizatorului si sa apeleze constructorul specific
+        el doar cere fabricii un utilizator iar fabrica decide ce instanta sa returneze.
+
+    - Server: descrie un server monitorizat cu diverse atribute.
+    Am implementat design pattern-ul BUILDER acestei clase deoarece:
+        - Server are un numar mare de atribute, dintre care unele sunt obligatorii iar altele optionale.
+        - Daca am avea un constructor clasic cu 10+ parametri ar fi fost greu de citit si predispus la erori (inversarea parametrilor).
+        - Builder permite construirea obiectelor pas cu pas intr-un mod usor si lizibil. De asemenea, gestioneaza frumos campurile optionale eliminand nevoia de a pasa null in constructori.
+
+    - Location: este o clasa cu mai multe atribute specifice unei locatii.
+    Si in aceasta clasa am implementat design pattern-ul BUILDER din acelasi motiv ca la clasa Server. Similar cu clasa Server,
+    Location are atribute obligatorii si optionale, Builder simplifica instantierea.
+
+    - ResourceGroups: defineste grupurile responsabile pentru monitorizarea resurselor, care si ele contin atribute specifice.
+    Aici am implementat design pattern-ul OBSERVER: Server-ul fiind subiectul si ResourceGroup-ul fiind observatorul.
+    De ce am implementat aceasta metoda:
+        - In proiect se cere ca atunci cand un server genereaza o alerta, grupul care il monitorizeaza sa fie notificat automat.
+        - Decupleaza logica de generare a alertei de logica de tratare a acesteia. Serverul nu trebuie sa stie detalii despre cum functioneaza
+        grupul ci doar sa ii trimita notificarea.
+
+    - Alert: este folosita pentru definirea notificarilor de sistem, si ea are atribute specifice.
+
+    - Database: simuleaza interactiunea cu baza de date.
+    Aici am implementat SINGLETON ca design pattern deoarece:
+        - Se doreste prevenirea instantierii multiple, iar Singleton se ocupa de aceasta problema.
+        - Garanteaza ca exista o singura instanta a bazei de date in memorie pe tot parcursul rularii aplicatiei, oferind un punct global de acces la date.
+
+    In database am adaugat urmatoarele metode:
+        - processFile:
+        Verifica daca fisierul de intrare are extensia .in (o adauga daca lipseste) si construieste calea pentru fisierul de iesire .out. Citeste fisierul linie cu linie ignorand header-ul.
+
+        - executeCommand:
+        Primeste o linie din fisier si pe baza tipului de fisier (SERVERS, GROUPS, LISTENER), decide ce metoda specifica sa apeleze. Tot aici prindem exceptiile si le scriem in fisierul de output.
+
+        - addServer:
+        Extrage atributele, foloseste Factory Pattern pentru a crea proprietarul serverului, foloseste Builder Pattern pentru a construi serverul si locatia, iar la final adauga serverul in baza
+        de date si scrie in fisier mesajul cerut.
+
+        - addGroup:
+        Cauta serverul dupa IP. Face un ResourceGroup nou si il leaga de server.
+
+        - findGroup/removeGroup:
+        Cauta grupul in lista si afiseaza daca l-a gasit sau nu. La stergere, il elimina din lista dupa ce il gaseste.
+
+        - addMember:
+        Cauta grupul dupa IP. Daca gaseste, folosim iarasi Factory pentru a crea un user nou si il bagam in lista de membri a grupului.
+
+        - findMember/removeMember:
+        Parcurgem membrii grupului cu un for, cautand dupa nume si rol. Daca il gasim, il afisam sau il stergem din lista de membri a grupului.
+
+        - addEvent:
+        Creeaza o alerta cu mesaj si severitate. Gaseste serverul si apeleaza metoda genereazaAlerta(). Asta face ca serverul sa anunte grupul (Observer), iar grupul primeste notificarea.
+
+
+In acest proiect am folosit design pattern-urile:
+    - Factory (UserFactory)
+    - Singleton (Database)
+    - Observer (Server -> ResourceGroup)
+    - Builder (Server, Location)
+
